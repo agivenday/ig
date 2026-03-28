@@ -101,6 +101,9 @@ def post_story(folder: str) -> str:
     cid = upload_media(url, is_story=True)
     print(f"  Uploaded story.png → {cid}")
 
+    print("  Waiting 30 s for Meta to process story…")
+    time.sleep(30)
+
     print("  Publishing…")
     story_id = publish(cid)
     print(f"  ✓ Story live: {story_id}")
@@ -121,8 +124,8 @@ def main():
 
     post_carousel(folder, caption)
 
-    print("\nWaiting 5 s before story…")
-    time.sleep(5)
+    print("\nWaiting 30 s before story…")
+    time.sleep(30)
 
     post_story(folder)
 
