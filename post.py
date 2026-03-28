@@ -12,7 +12,7 @@ ACCOUNT_ID   = os.environ["INSTAGRAM_ACCOUNT_ID"]
 REPO         = os.environ["GITHUB_REPOSITORY"]   # e.g. "yourname/a-given-day"
 BRANCH       = os.environ.get("GITHUB_BRANCH", "main")
 
-BASE_API = f"https://graph.instagram.com/v21.0/{ACCOUNT_ID}"
+BASE_API = f"https://graph.facebook.com/v21.0/{ACCOUNT_ID}"
 BASE_RAW = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}"
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
