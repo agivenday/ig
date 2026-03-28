@@ -83,8 +83,8 @@ def post_carousel(folder: str, caption: str) -> str:
     print(f"  Creating carousel ({len(children)} images)…")
     carousel_id = create_carousel(children, caption)
 
-    print("  Waiting 30 s for Meta to process images…")
-    time.sleep(30)
+    print("  Waiting 45 s for Meta to process images…")
+    time.sleep(45)
 
     print("  Publishing…")
     post_id = publish(carousel_id)
