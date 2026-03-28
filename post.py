@@ -121,7 +121,7 @@ def main():
 
     post_carousel(folder, caption)
 
-    print("\nWaiting 60 s before story…")
+    print("\nWaiting 10 s before story…")
     time.sleep(60)
 
     post_story(folder)
