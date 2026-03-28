@@ -20,11 +20,12 @@ BASE_RAW = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}"
 def image_url(folder: str, filename: str) -> str:
     return f"{BASE_RAW}/cards/{folder}/{filename}"
 
-def upload_media(url: str, is_carousel_item=False, is_story=False) -> str:
+def upload_media(path: str, is_carousel_item=False, is_story=False) -> str:
     """Upload an image to Instagram and return its container ID."""
     params = {
-        "image_url":    url,
+        "image_url":    path,
         "access_token": ACCESS_TOKEN,
+        "image_quality": "HIGH",
     }
     if is_carousel_item:
         params["is_carousel_item"] = "true"
@@ -83,8 +84,8 @@ def post_carousel(folder: str, caption: str) -> str:
     print(f"  Creating carousel ({len(children)} images)…")
     carousel_id = create_carousel(children, caption)
 
-    print("  Waiting 25 s for Meta to process images…")
-    time.sleep(25)
+    print("  Waiting 30 s for Meta to process images…")
+    time.sleep(30)
 
     print("  Publishing…")
     post_id = publish(carousel_id)
