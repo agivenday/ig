@@ -83,6 +83,9 @@ def post_carousel(folder: str, caption: str) -> str:
     print(f"  Creating carousel ({len(children)} images)…")
     carousel_id = create_carousel(children, caption)
 
+    print("  Waiting 30 s for Meta to process images…")
+    time.sleep(30)
+
     print("  Publishing…")
     post_id = publish(carousel_id)
     print(f"  ✓ Carousel live: {post_id}")
@@ -106,7 +109,7 @@ def post_story(folder: str) -> str:
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
-    folder = datetime.now(timezone.utc).strftime("%m-%d")
+    folder = os.environ.get("POST_DATE") or datetime.now(timezone.utc).strftime("%m-%d")
     print(f"\n{'═' * 40}")
     print(f"  a.given.day — {folder}")
     print(f"{'═' * 40}\n")
