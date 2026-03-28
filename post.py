@@ -20,12 +20,11 @@ BASE_RAW = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}"
 def image_url(folder: str, filename: str) -> str:
     return f"{BASE_RAW}/cards/{folder}/{filename}"
 
-def upload_media(path: str, is_carousel_item=False, is_story=False) -> str:
+def upload_media(url: str, is_carousel_item=False, is_story=False) -> str:
     """Upload an image to Instagram and return its container ID."""
     params = {
-        "image_url":    path,
+        "image_url":    url,
         "access_token": ACCESS_TOKEN,
-        "image_quality": "HIGH",
     }
     if is_carousel_item:
         params["is_carousel_item"] = "true"
