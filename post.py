@@ -122,7 +122,10 @@ def main():
     caption = caption_file.read_text(encoding="utf-8").strip() if caption_file.exists() else folder
     print(f"Caption: {caption!r}\n")
 
-    post_carousel(folder, caption)
+    try:
+        post_carousel(folder, caption)
+    except Exception as e:
+        print(f"\n⚠ Carousel error: {e} — continuing to story…", file=sys.stderr)
 
     print("\nWaiting 30 s before story…")
     time.sleep(30)
