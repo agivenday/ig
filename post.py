@@ -57,7 +57,23 @@ def publish(container_id: str) -> str:
     r.raise_for_status()
     return r.json()["id"]
 
-def file_exists_at_url(url: str) -> bool:
+def wait_until_ready(container_id: str, retries: int = 10, delay: int = 6) -> bool:
+    """Poll container status until FINISHED or timeout."""
+    params = {
+        "fields":       "status_code",
+        "access_token": ACCESS_TOKEN,
+    }
+    for attempt in range(retries):
+        r = requests.get(f"https://graph.facebook.com/v21.0/{container_id}", params=params)
+        r.raise_for_status()
+        status = r.json().get("status_code")
+        print(f"  Container status: {status} (attempt {attempt + 1})")
+        if status == "FINISHED":
+            return True
+        if status == "ERROR":
+            raise RuntimeError(f"Container {container_id} failed with ERROR status")
+        time.sleep(delay)
+    raise RuntimeError(f"Container {container_id} not ready after {retries} attempts")
     """Check whether a raw GitHub file URL resolves."""
     r = requests.head(url, timeout=10)
     return r.status_code == 200
@@ -83,8 +99,8 @@ def post_carousel(folder: str, caption: str) -> str:
     print(f"  Creating carousel ({len(children)} images)…")
     carousel_id = create_carousel(children, caption)
 
-    print("  Waiting 30 s for Meta to process images…")
-    time.sleep(30)
+    print("  Waiting for Meta to process carousel…")
+    wait_until_ready(carousel_id)
 
     print("  Publishing…")
     post_id = publish(carousel_id)
@@ -101,8 +117,8 @@ def post_story(folder: str) -> str:
     cid = upload_media(url, is_story=True)
     print(f"  Uploaded story.png → {cid}")
 
-    print("  Waiting 30 s for Meta to process story…")
-    time.sleep(30)
+    print("  Waiting for Meta to process story…")
+    wait_until_ready(cid)
 
     print("  Publishing…")
     story_id = publish(cid)
@@ -127,8 +143,8 @@ def main():
     except Exception as e:
         print(f"\n⚠ Carousel error: {e} — continuing to story…", file=sys.stderr)
 
-    print("\nWaiting 30 s before story…")
-    time.sleep(30)
+    print("\nWaiting 10 s before story…")
+    time.sleep(10)
 
     post_story(folder)
 
