@@ -74,6 +74,8 @@ def wait_until_ready(container_id: str, retries: int = 10, delay: int = 6) -> bo
             raise RuntimeError(f"Container {container_id} failed with ERROR status")
         time.sleep(delay)
     raise RuntimeError(f"Container {container_id} not ready after {retries} attempts")
+
+def file_exists_at_url(url: str) -> bool:
     """Check whether a raw GitHub file URL resolves."""
     r = requests.head(url, timeout=10)
     return r.status_code == 200
