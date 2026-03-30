@@ -1,9 +1,7 @@
 name: a.given.day — daily post
 
 on:
-  schedule:
-    - cron: '0 0 * * *'   # every day at 00:00 UTC
-  workflow_dispatch:        # manual trigger
+  workflow_dispatch:        # triggered by cron-job.org at 00:00 UTC
     inputs:
       post_date:
         description: 'Folder to post (MM-DD). Leave empty to use today.'
