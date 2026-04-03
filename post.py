@@ -94,6 +94,7 @@ def post_carousel(folder: str, caption: str) -> str:
         cid = upload_media(url, is_carousel_item=True)
         children.append(cid)
         print(f"  Uploaded {i}.png → {cid}")
+        wait_until_ready(cid)
 
     if len(children) < 2:
         raise ValueError(f"Need at least 2 images for a carousel, found {len(children)}")
@@ -143,7 +144,12 @@ def main():
     try:
         post_carousel(folder, caption)
     except Exception as e:
-        print(f"\n⚠ Carousel error: {e} — continuing to story…", file=sys.stderr)
+        print(f"\n⚠ Carousel error: {e} — retrying in 30 s…", file=sys.stderr)
+        time.sleep(30)
+        try:
+            post_carousel(folder, caption)
+        except Exception as e2:
+            print(f"\n⚠ Carousel failed again: {e2} — continuing to story…", file=sys.stderr)
 
     print("\nWaiting 10 s before story…")
     time.sleep(10)
