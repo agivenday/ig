@@ -178,12 +178,16 @@ def main():
     print("\nWaiting 10 s before story…")
     time.sleep(10)
 
+    story_id = None
     for attempt in range(1, 4):
         try:
-            post_story(folder)
+            story_id = post_story(folder)
             break
         except Exception as e:
             print(f"\n⚠ Story attempt {attempt} failed: {e}", file=sys.stderr)
+            if story_id:
+                print(f"  Story went through despite error ({story_id}) — skipping retry.")
+                break
             if attempt < 3:
                 print(f"  Retrying in 30 s…", file=sys.stderr)
                 time.sleep(30)
