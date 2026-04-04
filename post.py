@@ -141,20 +141,32 @@ def main():
     caption = caption_file.read_text(encoding="utf-8").strip() if caption_file.exists() else folder
     print(f"Caption: {caption!r}\n")
 
-    try:
-        post_carousel(folder, caption)
-    except Exception as e:
-        print(f"\n⚠ Carousel error: {e} — retrying in 30 s…", file=sys.stderr)
-        time.sleep(30)
+    for attempt in range(1, 4):
         try:
             post_carousel(folder, caption)
-        except Exception as e2:
-            print(f"\n⚠ Carousel failed again: {e2} — continuing to story…", file=sys.stderr)
+            break
+        except Exception as e:
+            print(f"\n⚠ Carousel attempt {attempt} failed: {e}", file=sys.stderr)
+            if attempt < 3:
+                print(f"  Retrying in 30 s…", file=sys.stderr)
+                time.sleep(30)
+            else:
+                print(f"  Carousel failed after 3 attempts — continuing to story…", file=sys.stderr)
 
     print("\nWaiting 10 s before story…")
     time.sleep(10)
 
-    post_story(folder)
+    for attempt in range(1, 4):
+        try:
+            post_story(folder)
+            break
+        except Exception as e:
+            print(f"\n⚠ Story attempt {attempt} failed: {e}", file=sys.stderr)
+            if attempt < 3:
+                print(f"  Retrying in 30 s…", file=sys.stderr)
+                time.sleep(30)
+            else:
+                print(f"  Story failed after 3 attempts.", file=sys.stderr)
 
     print("\n✓ All done.\n")
 
