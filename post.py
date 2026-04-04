@@ -21,12 +21,10 @@ def image_url(folder: str, filename: str) -> str:
     return f"{BASE_RAW}/cards/{folder}/{filename}"
 
 def file_exists_at_url(url: str) -> bool:
-    """Check whether a raw GitHub file URL resolves."""
     r = requests.head(url, timeout=10)
     return r.status_code == 200
 
 def upload_media(url: str, is_carousel_item=False, is_story=False) -> str:
-    """Upload an image to Instagram and return its container ID."""
     params = {
         "image_url":    url,
         "access_token": ACCESS_TOKEN,
@@ -40,7 +38,6 @@ def upload_media(url: str, is_carousel_item=False, is_story=False) -> str:
     return r.json()["id"]
 
 def create_carousel(children_ids: list[str], caption: str) -> str:
-    """Combine uploaded images into a carousel container."""
     params = {
         "media_type":   "CAROUSEL",
         "children":     ",".join(children_ids),
@@ -52,7 +49,6 @@ def create_carousel(children_ids: list[str], caption: str) -> str:
     return r.json()["id"]
 
 def publish(container_id: str) -> str:
-    """Publish a container. Returns the published post ID."""
     params = {
         "creation_id":  container_id,
         "access_token": ACCESS_TOKEN,
@@ -62,7 +58,6 @@ def publish(container_id: str) -> str:
     return r.json()["id"]
 
 def wait_until_ready(container_id: str, retries: int = 10, delay: int = 6) -> None:
-    """Poll container status until FINISHED or raise on timeout/error."""
     params = {
         "fields":       "status_code",
         "access_token": ACCESS_TOKEN,
@@ -78,6 +73,26 @@ def wait_until_ready(container_id: str, retries: int = 10, delay: int = 6) -> No
             raise RuntimeError(f"Container {container_id} failed with ERROR status")
         time.sleep(delay)
     raise RuntimeError(f"Container {container_id} not ready after {retries} attempts")
+
+# ─── Double-post protection ───────────────────────────────────────────────────
+
+def carousel_posted_today(folder: str) -> bool:
+    """Check Instagram API for a carousel already posted today."""
+    r = requests.get(
+        f"{BASE_API}/media",
+        params={
+            "fields":       "id,timestamp,media_type",
+            "access_token": ACCESS_TOKEN,
+        }
+    )
+    r.raise_for_status()
+    for post in r.json().get("data", []):
+        ts = post.get("timestamp", "")
+        # timestamp format: 2026-04-04T00:01:00+0000 — extract MM-DD
+        if ts[5:10] == folder and post.get("media_type") == "CAROUSEL_ALBUM":
+            print(f"  ✓ Carousel already live today: {post['id']} — skipping.")
+            return True
+    return False
 
 # ─── Posting logic ────────────────────────────────────────────────────────────
 
@@ -127,21 +142,6 @@ def post_story(folder: str) -> str:
     print(f"  ✓ Story live: {story_id}")
     return story_id
 
-def run_with_retries(fn, label: str, retries: int = 3, delay: int = 30, *args, **kwargs):
-    """Run a posting function with retries. Stops immediately on success."""
-    for attempt in range(1, retries + 1):
-        try:
-            fn(*args, **kwargs)
-            return True
-        except Exception as e:
-            print(f"\n⚠ {label} attempt {attempt} failed: {e}", file=sys.stderr)
-            if attempt < retries:
-                print(f"  Retrying in {delay} s…", file=sys.stderr)
-                time.sleep(delay)
-            else:
-                print(f"  {label} failed after {retries} attempts.", file=sys.stderr)
-    return False
-
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
@@ -154,12 +154,41 @@ def main():
     caption = caption_file.read_text(encoding="utf-8").strip() if caption_file.exists() else folder
     print(f"Caption: {caption!r}\n")
 
-    run_with_retries(post_carousel, "Carousel", 3, 30, folder, caption)
+    # ── Carousel ──────────────────────────────
+    if carousel_posted_today(folder):
+        print("  Carousel already posted — skipping.")
+    else:
+        for attempt in range(1, 4):
+            try:
+                post_carousel(folder, caption)
+                break
+            except Exception as e:
+                print(f"\n⚠ Carousel attempt {attempt} failed: {e}", file=sys.stderr)
+                # Before retrying, verify it didn't actually post despite the error
+                if carousel_posted_today(folder):
+                    print("  Post went through despite error — skipping retry.")
+                    break
+                if attempt < 3:
+                    print(f"  Retrying in 30 s…", file=sys.stderr)
+                    time.sleep(30)
+                else:
+                    print(f"  Carousel failed after 3 attempts.", file=sys.stderr)
 
+    # ── Story ─────────────────────────────────
     print("\nWaiting 10 s before story…")
     time.sleep(10)
 
-    run_with_retries(post_story, "Story", 3, 30, folder)
+    for attempt in range(1, 4):
+        try:
+            post_story(folder)
+            break
+        except Exception as e:
+            print(f"\n⚠ Story attempt {attempt} failed: {e}", file=sys.stderr)
+            if attempt < 3:
+                print(f"  Retrying in 30 s…", file=sys.stderr)
+                time.sleep(30)
+            else:
+                print(f"  Story failed after 3 attempts.", file=sys.stderr)
 
     print("\n✓ All done.\n")
 
